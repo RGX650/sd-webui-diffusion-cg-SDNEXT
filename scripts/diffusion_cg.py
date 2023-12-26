@@ -73,23 +73,16 @@ class DiffusionCG(scripts.Script):
     def ui(self, is_img2img):
         with gr.Accordion(f'Diffusion CG {VERSION}', open=False):
             with gr.Row():
-                enableG = gr.Checkbox(label="Enable (Global)", value=(((not is_img2img) and (c_t2i or n_t2i)) or (is_img2img and (c_i2i or n_i2i))))
-                sd_ver = gr.Radio(['1.5', 'XL'], value=def_sd, label="Stable Diffusion Version")
+                enableG = gr.Checkbox(label="Enable (Global)", value=True)  # Always visible checkbox
 
-            with gr.Row():
-                with gr.Group():
-                    gr.Markdown('<h3 align="center">Recenter</h3>')
+                # Renamed the checkbox for recentering
+                enableR = gr.Checkbox(label="Recenter", value=True)
 
-                    if not is_img2img:
-                        v = 1.0 if c_t2i else 0.0
-                    else:
-                        v = 1.0 if c_i2i else 0.0
-
-                    rc_str = gr.Slider(label="Effect Strength", minimum=0.0, maximum=1.0, step=0.2, value=v)
+                sd_ver = gr.Radio(['1.5', 'XL'], value='1.5', label="Stable Diffusion Version")
 
                 with gr.Group():
                     gr.Markdown('<h3 align="center">Normalization</h3>')
-                    enableN = gr.Checkbox(label="Activate", value=(((not is_img2img) and n_t2i) or (is_img2img and n_i2i)))
+                    enableN = gr.Checkbox(label="Activate", value=(is_img2img or False))  # Adjusted visibility logic
 
             with gr.Accordion('Recenter Settings', open=False):
                 with gr.Group(visible=(def_sd=='1.5')) as setting15:
@@ -104,14 +97,14 @@ class DiffusionCG(scripts.Script):
                     b = gr.Slider(label="b", minimum=-1.00, maximum=1.00, step=0.01, value=0.0)
 
             def on_radio_change(choice):
-                if choice != "1.5":
+                if choice == "1.5":
                     return [gr.Group.update(visible=True), gr.Group.update(visible=False)]
                 else:
                     return [gr.Group.update(visible=False), gr.Group.update(visible=True)]
 
             sd_ver.select(on_radio_change, sd_ver, [setting15, settingXL])
 
-        return [enableG, sd_ver, rc_str, enableN, C, M, Y, K, L, a, b]
+        return [enableG, sd_ver, rc_str, enableR, enableN, C, M, Y, K, L, a, b]
 
     def before_hr(self, p, *args):
         KDiffusionSampler.diffcg_normalize = False
