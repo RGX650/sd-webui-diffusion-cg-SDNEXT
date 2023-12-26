@@ -1,4 +1,4 @@
-from dataclasses import dataclas
+from dataclasses import dataclass
 from modules.sd_samplers_kdiffusion import KDiffusionSampler
 from scripts.cg_version import VERSION
 from modules import script_callbacks
