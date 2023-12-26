@@ -72,12 +72,12 @@ class DiffusionCG(scripts.Script):
 
     def ui(self, is_img2img):
         with gr.Accordion(f'Diffusion CG {VERSION}', open=False):
+            
             with gr.Row():
                 enableG = gr.Checkbox(label="Enable (Global)", value=True)  # Always visible checkbox
-
-                
                 sd_ver = gr.Radio(['1.5', 'XL'], value='1.5', label="Stable Diffusion Version")
                 
+            with gr.Row():
                 with gr.Group():
                     gr.Markdown('<h3 align="center">Recenter</h3>')
                     enableR = gr.Checkbox(label="Activate R", value=True)
