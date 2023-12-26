@@ -1,3 +1,4 @@
+from dataclasses import dataclas
 from modules.sd_samplers_kdiffusion import KDiffusionSampler
 from scripts.cg_version import VERSION
 from modules import script_callbacks
@@ -63,7 +64,18 @@ n_i2i = (an == "img2img" or an == "Both")
 
 
 class DiffusionCG(scripts.Script):
+    
+    @dataclass
+    class CGOptions:
+        enable_centering: bool
+        enable_normalization: bool
 
+        def is_enabled(self):
+            return self.enable_normalization or self.enable_centering
+
+    options = CGOptions
+
+    
     def title(self):
         return "DiffusionCG"
 
@@ -74,13 +86,13 @@ class DiffusionCG(scripts.Script):
         with gr.Accordion(f'Diffusion CG {VERSION}', open=False):
             
             with gr.Row():
-                enableG = gr.Checkbox(label="Enable (Global)", value=True)  # Always visible checkbox
+                enableG = gr.Checkbox(label="Enable (Global)")
                 sd_ver = gr.Radio(['1.5', 'XL'], value='1.5', label="Stable Diffusion Version")
                 
             with gr.Row():
                 with gr.Group():
                     gr.Markdown('<h3 align="center">Recenter</h3>')
-                    enableR = gr.Checkbox(label="Activate R", value=True)
+                    enableR = gr.Checkbox(label="Enable")
                     
                     if not is_img2img:
                         v = 1.0 if c_t2i else 0.0
@@ -91,7 +103,7 @@ class DiffusionCG(scripts.Script):
                     
                 with gr.Group():
                     gr.Markdown('<h3 align="center">Normalization</h3>')
-                    enableN = gr.Checkbox(label="Activate N", value=(is_img2img or False))  # Adjusted visibility logic
+                    enableN = gr.Checkbox(label="Enable")
 
             with gr.Accordion('Recenter Settings', open=False):
                 with gr.Group(visible=(def_sd=='1.5')) as setting15:
@@ -115,21 +127,26 @@ class DiffusionCG(scripts.Script):
 
         return [enableG, sd_ver, rc_str, enableR, enableN, C, M, Y, K, L, a, b]
 
-    def before_hr(self, p, *args):
-        KDiffusionSampler.diffcg_normalize = False
 
-    def process(self, p, enableG:bool, sd_ver:str, rc_str:float, enableN:bool, C, M, Y, K, L, a, b):
+    def before_hr(self, p, *args):
+        KDiffusionSampler.diffcg_options.enable_normalzation = False
+        
+    
+    def process(self, p, enableG:bool, sd_ver:str, rc_str:float, enableR:bool, enableN:bool, C, M, Y, K, L, a, b):
+        self.options = DiffusionCG.CGOptions(enable_centering = enableC, enable_normalization = enableN)
+        
+        KDiffusionSampler.diffcg_options = self.options
         KDiffusionSampler.diffcg_enable = enableG
+        KDiffusionSampler.diffcg_recenter = enableC
+        KDiffusionSampler.diffcg_normalize = enableN
 
         if sd_ver == '1.5':
             KDiffusionSampler.LUTs = [-K, -M, C, Y]
         else:
             KDiffusionSampler.LUTs = [L, -a, b]
-
-        KDiffusionSampler.diffcg_recenter_strength = rc_str
-        KDiffusionSampler.diffcg_normalize = enableN
-
+        
         KDiffusionSampler.diffcg_tensor = 'x' if p.sampler_name.strip() == 'Euler' else 'denoised'
+        KDiffusionSampler.diffcg_recenter_strength = rc_str if enableR else 0
 
         if not hasattr(p, 'enable_hr') and hasattr(p, 'denoising_strength') and not shared.opts.img2img_fix_steps and p.denoising_strength < 1.0:
             KDiffusionSampler.diffcg_last_step = int(p.steps * p.denoising_strength) + 1
