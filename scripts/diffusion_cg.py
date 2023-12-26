@@ -29,7 +29,9 @@ def normalize_tensor(x, r):
 original_callback = KDiffusionSampler.callback_state
 
 def center_callback(self, d):
-    if not self.diffcg_enable or getattr(self.p, 'image_mask', None) is not None:
+    options: "DiffusionCG.CGOptions" = self.diffcg_options
+
+    if not options.is_enabled():
         return original_callback(self, d)
 
     batchSize = d['x'].size(0)
@@ -92,7 +94,7 @@ class DiffusionCG(scripts.Script):
             with gr.Row():
                 with gr.Group():
                     gr.Markdown('<h3 align="center">Recenter</h3>')
-                    enableR = gr.Checkbox(label="Enable")
+                    enableC = gr.Checkbox(label="Enable")
                     
                     if not is_img2img:
                         v = 1.0 if c_t2i else 0.0
@@ -125,14 +127,14 @@ class DiffusionCG(scripts.Script):
 
             sd_ver.select(on_radio_change, sd_ver, [setting15, settingXL])
 
-        return [enableG, sd_ver, rc_str, enableR, enableN, C, M, Y, K, L, a, b]
+        return [enableG, sd_ver, rc_str, enableC, enableN, C, M, Y, K, L, a, b]
 
 
     def before_hr(self, p, *args):
         KDiffusionSampler.diffcg_options.enable_normalzation = False
         
     
-    def process(self, p, enableG:bool, sd_ver:str, rc_str:float, enableR:bool, enableN:bool, C, M, Y, K, L, a, b):
+    def process(self, p, enableG:bool, sd_ver:str, rc_str:float, enableC:bool, enableN:bool, C, M, Y, K, L, a, b):
         self.options = DiffusionCG.CGOptions(enable_centering = enableC, enable_normalization = enableN)
         
         KDiffusionSampler.diffcg_options = self.options
@@ -146,7 +148,7 @@ class DiffusionCG(scripts.Script):
             KDiffusionSampler.LUTs = [L, -a, b]
         
         KDiffusionSampler.diffcg_tensor = 'x' if p.sampler_name.strip() == 'Euler' else 'denoised'
-        KDiffusionSampler.diffcg_recenter_strength = rc_str if enableR else 0
+        KDiffusionSampler.diffcg_recenter_strength = rc_str if enableC else 0
 
         if not hasattr(p, 'enable_hr') and hasattr(p, 'denoising_strength') and not shared.opts.img2img_fix_steps and p.denoising_strength < 1.0:
             KDiffusionSampler.diffcg_last_step = int(p.steps * p.denoising_strength) + 1
