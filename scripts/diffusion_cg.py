@@ -106,7 +106,7 @@ class DiffusionCG(scripts.Script):
                     b = gr.Slider(label="b", minimum=-1.00, maximum=1.00, step=0.01, value=0.0)
 
             def on_radio_change(choice):
-                if choice == "1.5":
+                if choice != "1.5":
                     return [gr.Group.update(visible=True), gr.Group.update(visible=False)]
                 else:
                     return [gr.Group.update(visible=False), gr.Group.update(visible=True)]
