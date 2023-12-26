@@ -73,6 +73,6 @@ def restore_callback():
 script_callbacks.on_script_unloaded(restore_callback)
 
 def on_ui_settings():
-    shared.opts.add_option("tensor_debug", shared.OptionInfo(False, "[For Development Only] Log Tensor Statistics Each Step", section=("system", "System")).needs_reload_ui())
+    shared.opts.add_option("tensor_debug", shared.OptionInfo(False, "[For Development Only] Log Tensor Statistics Each Step", section=("system", "System")).needs_restart())
 
 script_callbacks.on_ui_settings(on_ui_settings)
