@@ -75,14 +75,23 @@ class DiffusionCG(scripts.Script):
             with gr.Row():
                 enableG = gr.Checkbox(label="Enable (Global)", value=True)  # Always visible checkbox
 
-                # Renamed the checkbox for recentering
-                enableR = gr.Checkbox(label="Recenter", value=True)
-
+                
                 sd_ver = gr.Radio(['1.5', 'XL'], value='1.5', label="Stable Diffusion Version")
+                
+                with gr.Group():
+                    gr.Markdown('<h3 align="center">Recenter</h3>')
+                    enableR = gr.Checkbox(label="Activate R", value=True)
+                    
+                    if not is_img2img:
+                        v = 1.0 if c_t2i else 0.0
+                    else:
+                        v = 1.0 if c_i2i else 0.0
 
+                    rc_str = gr.Slider(label="Effect Strength", minimum=0.0, maximum=1.0, step=0.2, value=v)
+                    
                 with gr.Group():
                     gr.Markdown('<h3 align="center">Normalization</h3>')
-                    enableN = gr.Checkbox(label="Activate", value=(is_img2img or False))  # Adjusted visibility logic
+                    enableN = gr.Checkbox(label="Activate N", value=(is_img2img or False))  # Adjusted visibility logic
 
             with gr.Accordion('Recenter Settings', open=False):
                 with gr.Group(visible=(def_sd=='1.5')) as setting15:
